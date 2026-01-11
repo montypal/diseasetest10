@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disease Detectives: Clinical Case Studies</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #e67e22; /* Clinical Orange */
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #c0392b;
+            --bg: #f8f9fa;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Roboto', Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-top: 6px solid var(--secondary);
+        }
+
+        header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+        }
+
+        h1 { margin: 0; color: var(--primary); font-size: 2.2rem; }
+        .subtitle { color: #7f8c8d; margin-top: 5px; font-weight: 500; }
+
+        /* Progress & Stats */
+        .progress-container {
+            background: #eee;
+            height: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--secondary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 25px;
+        }
+
+        /* Case Study Box */
+        .case-card {
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .case-header {
+            background: #2c3e50;
+            color: white;
+            padding: 10px 20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+        .case-body {
+            padding: 25px;
+        }
+
+        .vignette-text {
+            font-size: 1.2rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            background-color: #fff3cd;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+
+        /* Options */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 600px) { .options-grid { grid-template-columns: 1fr; } }
+
+        .option-btn {
+            background: #fff;
+            border: 2px solid #ccc;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: left;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--secondary);
+            background: #fff8f0;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+
+        .option-btn.correct {
+            background: #d4edda;
+            border-color: var(--success);
+            color: #155724;
+        }
+
+        .option-btn.wrong {
+            background: #fadbd8;
+            border-color: var(--error);
+            color: #721c24;
+            opacity: 0.7;
+        }
+
+        .option-btn:disabled {
+            cursor: default;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Feedback */
+        .feedback-area {
+            margin-top: 25px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+            font-size: 1.05rem;
+            border-left: 5px solid transparent;
+        }
+        .feedback-area.correct { background: #e8f5e9; border-color: var(--success); }
+        .feedback-area.wrong { background: #fce4ec; border-color: var(--error); }
+
+        .pearl {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #555;
+            font-style: italic;
+        }
+
+        .next-btn {
+            display: none;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            float: right;
+            transition: background 0.2s;
+        }
+        .next-btn:hover { background: #34495e; }
+
+        /* Results */
+        .results-view {
+            text-align: center;
+            display: none;
+            padding: 40px 0;
+        }
+        .final-score {
+            font-size: 4rem;
+            font-weight: 800;
+            color: var(--secondary);
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Clinical Case Studies</h1>
+        <div class="subtitle">Match the Patient Scenario to the Organism</div>
+    </header>
+
+    <div id="quiz-interface">
+        <div class="progress-container">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <div class="stats-row">
+            <span id="q-number">Case 1 / 20</span>
+            <span id="score-text">Score: 0</span>
+        </div>
+
+        <div id="question-content">
+            </div>
+
+        <div id="feedback" class="feedback-area"></div>
+        <button id="next-btn" class="next-btn">Next Case &rarr;</button>
+    </div>
+
+    <div id="results-interface" class="results-view">
+        <h2>Diagnosis Complete!</h2>
+        <p>You have reviewed all clinical cases.</p>
+        <div class="final-score" id="final-score-display">0</div>
+        <p id="final-message"></p>
+        <button class="next-btn" style="display:inline-block; float:none;" onclick="location.reload()">Start New Rounds</button>
+    </div>
+</div>
+
+<script>
+    /**
+     * CLINICAL CASE DATABASE
+     * Includes scenarios based on bacterial, viral, and fungal infections from CDC lists.
+     */
+    const cases = [
+        {
+            age: "6-year-old female",
+            symptoms: "Sore throat, fever, and a 'sandpaper-like' rash on the chest and neck. The tongue appears bright red and bumpy ('strawberry tongue').",
+            risk: "Outbreak at local elementary school.",
+            correct: "Group A Streptococcus",
+            type: "Bacterial",
+            options: ["Staphylococcus aureus", "Group A Streptococcus", "Candida albicans", "Influenza B"],
+            pearl: "This describes Scarlet Fever, which is a complication of Strep Throat."
+        },
+        {
+            age: "24-year-old male",
+            symptoms: "Painless ulcer (chancre) on the genitals, followed weeks later by a rash on the palms of the hands and soles of the feet.",
+            risk: "Unprotected sexual encounter 3 weeks ago.",
+            correct: "Treponema pallidum (Syphilis)",
+            type: "Bacterial",
+            options: ["Neisseria gonorrhoeae", "Herpes Simplex Virus", "Treponema pallidum (Syphilis)", "Chlamydia trachomatis"],
+            pearl: "The 'Great Imitator.' The painless chancre is the hallmark of primary syphilis; the palm/sole rash marks secondary syphilis."
+        },
+        {
+            age: "35-year-old female",
+            symptoms: "Sudden onset of high fever (103°F), severe muscle aches, dry cough, and extreme fatigue. No runny nose.",
+            risk: "Winter season; works in a crowded office.",
+            correct: "Influenza Virus",
+            type: "Viral",
+            options: ["Rhinovirus (Common Cold)", "Influenza Virus", "Bordetella pertussis", "Streptococcus pneumoniae"],
+            pearl: "Influenza is distinguished from the common cold by its sudden onset and severe myalgia (muscle aches)."
+        },
+        {
+            age: "14-year-old male",
+            symptoms: "Bull's-eye shaped rash (erythema migrans) on the thigh, fatigue, and joint pain.",
+            risk: "Returned from a camping trip in Connecticut (wooded area).",
+            correct: "Borrelia burgdorferi (Lyme)",
+            type: "Bacterial",
+            options: ["Rickettsia rickettsii", "Borrelia burgdorferi (Lyme)", "West Nile Virus", "Tinea corporis (Ringworm)"],
+            pearl: "Lyme disease is transmitted by the black-legged tick. The targetoid rash is pathognomonic."
+        },
+        {
+            age: "45-year-old male",
+            symptoms: "Severe, watery diarrhea described as 'rice-water stools', vomiting, and leg cramps caused by rapid dehydration.",
+            risk: "Recently drank unfiltered water while traveling in a developing nation.",
+            correct: "Vibrio cholerae",
+            type: "Bacterial",
+            options: ["E. coli O157:H7", "Salmonella Typhi", "Vibrio cholerae", "Giardia lamblia"],
+            pearl: "Cholera kills via rapid dehydration. 'Rice-water stool' is the classic buzzword description."
+        },
+        {
+            age: "68-year-old male",
+            symptoms: "High fever, cough, confusion, and pneumonia.",
+            risk: "Heavy smoker; recently stayed at a hotel with a large air conditioning system and hot tub.",
+            correct: "Legionella pneumophila",
+            type: "Bacterial",
+            options: ["Mycobacterium tuberculosis", "Legionella pneumophila", "Pseudomonas aeruginosa", "Respiratory Syncytial Virus"],
+            pearl: "Legionnaires' disease is associated with aerosolized water (AC towers, hot tubs). It causes an atypical pneumonia."
+        },
+        {
+            age: "2-month-old infant",
+            symptoms: "Violent coughing fits followed by a high-pitched intake of breath ('whoop'). Post-tussive vomiting.",
+            risk: "Unvaccinated.",
+            correct: "Bordetella pertussis",
+            type: "Bacterial",
+            options: ["Respiratory Syncytial Virus", "Bordetella pertussis", "Haemophilus influenzae", "Streptococcus pneumoniae"],
+            pearl: "Pertussis is 'Whooping Cough'. It is highly dangerous for infants."
+        },
+        {
+            age: "22-year-old female",
+            symptoms: "Nausea, vomiting, and non-bloody diarrhea starting 12 hours after a meal.",
+            risk: "Ate undercooked poultry and eggs at a picnic.",
+            correct: "Salmonella",
+            type: "Bacterial",
+            options: ["Clostridium botulinum", "Salmonella", "Staphylococcus aureus", "Hepatitis A"],
+            pearl: "Salmonella is classically associated with poultry, eggs, and reptiles (turtles)."
+        },
+        {
+            age: "30-year-old male",
+            symptoms: "Descending paralysis, starting with drooping eyelids and difficulty swallowing, progressing to muscle weakness.",
+            risk: "Consumed home-canned vegetables that were not properly sealed.",
+            correct: "Clostridium botulinum",
+            type: "Bacterial",
+            options: ["Clostridium tetani", "Campylobacter jejuni", "Clostridium botulinum", "Guillain-Barré Syndrome"],
+            pearl: "Botulism causes flaccid (limp) paralysis. Tetanus causes spastic (rigid) paralysis."
+        },
+        {
+            age: "50-year-old female",
+            symptoms: "Painful, blistering rash in a dermatomal distribution (a band on one side of the torso).",
+            risk: "History of chickenpox infection as a child.",
+            correct: "Varicella Zoster Virus (Shingles)",
+            type: "Viral",
+            options: ["Herpes Simplex Virus", "Varicella Zoster Virus (Shingles)", "Measles Virus", "Impetigo"],
+            pearl: "Shingles is the reactivation of the latent chickenpox virus hiding in nerve roots."
+        },
+        {
+            age: "19-year-old college student",
+            symptoms: "Stiff neck (nuchal rigidity), high fever, headache, and sensitivity to light (photophobia).",
+            risk: "Lives in a crowded dormitory.",
+            correct: "Neisseria meningitidis",
+            type: "Bacterial",
+            options: ["West Nile Virus", "Neisseria meningitidis", "Rabies Virus", "Zika Virus"],
+            pearl: "Meningococcal meningitis spreads in close quarters (dorms, barracks). It is a medical emergency."
+        },
+        {
+            age: "40-year-old construction worker",
+            symptoms: "Chronic cough, fever, night sweats, and weight loss. Chest X-ray shows cavitation in the upper lobes.",
+            risk: "Immigrated from a region with high infection rates; exposure to silica dust.",
+            correct: "Mycobacterium tuberculosis",
+            type: "Bacterial",
+            options: ["Lung Cancer", "Mycobacterium tuberculosis", "Aspergillus", "Pneumocystis jirovecii"],
+            pearl: "TB is the 'Captain of All These Men of Death'. Night sweats and weight loss are classic symptoms."
+        },
+        {
+            age: "28-year-old female (Pregnant)",
+            symptoms: "Mild fever, rash, joint pain, and red eyes.",
+            risk: "Recently traveled to Brazil. Ultrasound shows fetal microcephaly.",
+            correct: "Zika Virus",
+            type: "Viral",
+            options: ["Dengue Virus", "Zika Virus", "Rubella Virus", "Toxoplasma gondii"],
+            pearl: "Zika virus is transmitted by Aedes mosquitoes and causes severe birth defects (microcephaly)."
+        },
+        {
+            age: "32-year-old male",
+            symptoms: "Jaundice (yellowing of skin/eyes), fatigue, abdominal pain, and dark urine.",
+            risk: "Ate raw oysters and produce at a restaurant with poor hygiene ratings.",
+            correct: "Hepatitis A",
+            type: "Viral",
+            options: ["Hepatitis B", "Hepatitis C", "Hepatitis A", "Norovirus"],
+            pearl: "Hepatitis A is transmitted via the fecal-oral route (food/water), unlike Hep B and C (blood/fluids)."
+        },
+        {
+            age: "55-year-old archaeologist",
+            symptoms: "Fever, chest pain, and cough. Chest X-ray shows fungal balls.",
+            risk: "Explored caves in the Ohio River Valley; exposed to bat guano.",
+            correct: "Histoplasma capsulatum",
+            type: "Fungal",
+            options: ["Coccidioides (Valley Fever)", "Histoplasma capsulatum", "Blastomyces", "Cryptococcus"],
+            pearl: "Histoplasmosis is associated with bird and bat droppings in the Ohio/Mississippi river valleys."
+        },
+        {
+            age: "7-year-old male",
+            symptoms: "Itchy, ring-shaped red rash with a clear center on the arm.",
+            risk: "Adopted a stray kitten recently.",
+            correct: "Tinea corporis (Ringworm)",
+            type: "Fungal",
+            options: ["Lyme Disease", "Tinea corporis (Ringworm)", "Eczema", "Scabies"],
+            pearl: "Despite the name, Ringworm is a fungal infection (dermatophyte), not a worm."
+        },
+        {
+            age: "18-year-old female",
+            symptoms: "White, patchy lesions on the tongue and inner cheeks that bleed when scraped.",
+            risk: "Recently finished a long course of broad-spectrum antibiotics.",
+            correct: "Candida albicans (Thrush)",
+            type: "Fungal",
+            options: ["Herpes Simplex Virus", "Streptococcus pyogenes", "Candida albicans (Thrush)", "Leukoplakia"],
+            pearl: "Thrush is an opportunistic yeast infection common after antibiotics kill the 'good' bacteria."
+        },
+        {
+            age: "9-year-old male",
+            symptoms: "Fever, agitation, excessive salivation, and hydrophobia (fear of water/swallowing).",
+            risk: "Bitten by a bat while sleeping in a cabin 2 months ago.",
+            correct: "Rabies Virus",
+            type: "Viral",
+            options: ["Tetanus", "Rabies Virus", "Meningitis", "Encephalitis"],
+            pearl: "Once symptoms of Rabies appear, it is almost 100% fatal. Hydrophobia is a specific sign."
+        },
+        {
+            age: "60-year-old gardener",
+            symptoms: "Muscle stiffness, lockjaw (trismus), and painful muscle spasms.",
+            risk: " stepped on a rusty nail; unsure of vaccination history.",
+            correct: "Clostridium tetani",
+            type: "Bacterial",
+            options: ["Clostridium botulinum", "Clostridium tetani", "Staphylococcus aureus", "Rabies Virus"],
+            pearl: "Tetanus spores are found in soil. The toxin causes rigid paralysis."
+        },
+        {
+            age: "26-year-old female",
+            symptoms: "Sudden onset of severe vomiting and watery diarrhea ('stomach flu').",
+            risk: "Attended a cruise ship vacation where many passengers fell ill.",
+            correct: "Norovirus",
+            type: "Viral",
+            options: ["Rotavirus", "Norovirus", "Salmonella", "E. coli"],
+            pearl: "Norovirus is the #1 cause of foodborne illness and is notorious for cruise ship outbreaks."
+        }
+    ];
+
+    // --- GAME ENGINE ---
+    let currentQIndex = 0;
+    let score = 0;
+    let hasAnswered = false;
+
+    // Shuffle the cases array initially
+    cases.sort(() => Math.random() - 0.5);
+
+    function initGame() {
+        currentQIndex = 0;
+        score = 0;
+        document.getElementById('quiz-interface').style.display = 'block';
+        document.getElementById('results-interface').style.display = 'none';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        hasAnswered = false;
+        const data = cases[currentQIndex];
+        const container = document.getElementById('question-content');
+
+        // Update UI stats
+        document.getElementById('q-number').innerText = `Case ${currentQIndex + 1} / ${cases.length}`;
+        document.getElementById('score-text').innerText = `Score: ${score}`;
+        document.getElementById('progress-fill').style.width = `${((currentQIndex) / cases.length) * 100}%`;
+        
+        document.getElementById('feedback').style.display = 'none';
+        document.getElementById('next-btn').style.display = 'none';
+
+        // Shuffle options for this specific question
+        let currentOptions = [...data.options];
+        currentOptions.sort(() => Math.random() - 0.5);
+
+        // Build HTML
+        let html = `
+            <div class="case-card">
+                <div class="case-header">Patient ID: #${Math.floor(Math.random()*9000)+1000} | Type: ${data.type}</div>
+                <div class="case-body">
+                    <div class="vignette-text">
+                        <strong>Patient:</strong> ${data.age}<br><br>
+                        <strong>Clinical Presentation:</strong> ${data.symptoms}<br><br>
+                        <strong>History/Risk Factors:</strong> <span class="highlight">${data.risk}</span>
+                    </div>
+                    <div class="options-grid">
+        `;
+
+        currentOptions.forEach((opt, idx) => {
+            // Escape quotes for safety
+            const safeOpt = opt.replace(/'/g, "\\'");
+            const safeCorrect = data.correct.replace(/'/g, "\\'");
+            html += `<button class="option-btn" id="btn-${idx}" onclick="handleAnswer(${idx}, '${safeOpt}', '${safeCorrect}')">${opt}</button>`;
+        });
+
+        html += `   </div>
+                </div>
+            </div>`;
+
+        container.innerHTML = html;
+    }
+
+    window.handleAnswer = function(btnId, selectedText, correctText) {
+        if (hasAnswered) return;
+        hasAnswered = true;
+
+        const feedback = document.getElementById('feedback');
+        const data = cases[currentQIndex];
+        const btn = document.getElementById(`btn-${btnId}`);
+
+        if (selectedText === correctText) {
+            score++;
+            btn.classList.add('correct');
+            feedback.className = 'feedback-area correct';
+            feedback.innerHTML = `<strong>Diagnosis Correct!</strong><br><div class="pearl">${data.pearl}</div>`;
+        } else {
+            btn.classList.add('wrong');
+            feedback.className = 'feedback-area wrong';
+            feedback.innerHTML = `<strong>Incorrect Diagnosis.</strong><br>The correct organism is <strong>${data.correct}</strong>.<br><div class="pearl">${data.pearl}</div>`;
+            
+            // Highlight correct one
+            const allBtns = document.querySelectorAll('.option-btn');
+            allBtns.forEach(b => {
+                if (b.innerText === data.correct) b.classList.add('correct');
+            });
+        }
+
+        feedback.style.display = 'block';
+        document.getElementById('next-btn').style.display = 'block';
+    };
+
+    document.getElementById('next-btn').onclick =
